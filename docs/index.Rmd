@@ -27,6 +27,7 @@ library(lubridate)
 library(leaflet)
 library(sf)
 library(DT)
+library(ggplot2)
 ```
 
 ```{r}
@@ -50,7 +51,7 @@ table(w$VBD_Agent_subtype)
 table(w$VectorGroup)
 table(w$VectorSpecies)
 length(unique(w$VectorSpecies))
-
+head(w)
 ```
 
 # Species specified on the Vector net output
@@ -288,12 +289,70 @@ mc
 
 ```
 
-# Posible list to import to ADAGIO
+# MIR Mininum infection rates 
+## Selection of pririotized diseases
 ```{r}
-datatable(w %>% 
-  group_by(Country, Country_ISO, VectorSpecies, year, VBD_Agent, VBD_Agent_subtype, VBD_AS_Full, MIR) %>% 
-  summarise(n()))
+# ASF	African Swine Fever
+# CCHF	Crimean-Congo Haemorrhagic fever
+# EHD	Epizootic Haemorrhagic Disease
+# EE	Equine Encephalosis
+# *** HPAI	Highly Pathogenic Avian Influenza
+# JE	Japanese Encephalitis 
+# *** LSD	Lumpy Skin Disease
+# *** Rab	Rabies
+# RVF	Rift Valley Fever
+# WNF	West Nile Fever
+# 
+head(w)
 
-# NUTS2,"VectorSpeciesName","latest","status_numeric","NUTS_published_year","Status"
+# Which abreviattion correspond to the disease
+w %>% 
+group_by(w$VBD_Agent_subtype, w$VBD_AS_Full) %>% 
+  summarise(n())
+
+di <- c("ASFV","BTV","CCHFV", "EHDV", "EEV", "JEV", "RVFV", "WNV")
 
 ```
+
+## Value of MIR median and min considering every disease
+```{r}
+# Minimum infection rates
+# After applying the filtering criteria on the feeding status and life stage, 42 MIR values were
+# found or calculated for mosquitoes, 67 for sand flies, 27 for ticks, and 18 for biting midges.
+# Records including MIR values are visualized in a boxplot grouped by vector group (Figure 4).
+# Details per arthropod species are provided in Appendix F.
+
+table(w$fedStatus)
+table(w$LifeStage)
+
+w %>% 
+  filter(MIR > 0) %>% 
+  filter(VBD_Agent_subtype %in% di) %>% 
+  # filter(VBD_Agent_subtype == "ASFV") %>% 
+  group_by(VBD_AS_Full) %>% 
+  summarise(M=median(MIR), min(MIR)) 
+# %>% 
+#   arrange(m)
+
+```
+## MIR considerig disease and vector group
+```{r}
+datatable(w %>% 
+  filter(MIR > 0) %>% 
+  filter(VBD_Agent_subtype %in% di) %>%  
+  group_by(VBD_AS_Full, VectorGroup) %>% 
+  summarise(Min=round(min(MIR)), Median=round(median(MIR),2), Max=round(max(MIR),2)))
+
+```
+
+## Boxplot of MIR
+There is the problem with the selecting filter applied on the document, considering feeding status and life stage
+```{r}
+w %>% 
+  filter(MIR > 0) %>% 
+  filter(VBD_Agent_subtype %in% di) %>% 
+  ggplot(aes(MIR, color=VBD_AS_Full))+
+  geom_boxplot()
+
+```
+
