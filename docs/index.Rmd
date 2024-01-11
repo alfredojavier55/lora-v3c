@@ -327,7 +327,6 @@ a <- w %>%
   filter(fedStatus == "Unfed" | fedStatus == "Gravid") %>% 
   filter(VectorGroup == "Mosquitoes" | VectorGroup == "Biting midges" | VectorGroup == "Sand flies") %>%
   filter(LifeStage == "Female")
-datatable(a)
 ```
 
 ## Filter criteria for Ticks (27)
@@ -336,8 +335,6 @@ b <-  w %>%
     filter(MIR > 0) %>% 
     filter(fedStatus == "Unfed" | fedStatus == "Gravid") %>% 
     filter(VectorGroup == "Ticks")
-
-  datatable(b)
 ```
 ## Number of MIR values (Checking filter)
 ```{r}
@@ -375,7 +372,7 @@ datatable(c %>%
 
 ```
 
-## Boxplot of MIR - Disease
+# Boxplot of MIR - Disease
 ```{r}
 c %>% 
   filter(VBD_Agent_subtype %in% di) %>%
@@ -385,7 +382,21 @@ c %>%
   labs(y = "Disease", x= "MIR %o")
 ```
 
-## Boxplot of MIR - Species
+## Boxplot of MIR - Disease/VectorGroup
+```{r}
+c %>% 
+  filter(VBD_Agent_subtype %in% di) %>%
+  group_by(VBD_AS_Full, VectorGroup, VectorSpecies) %>% 
+  ggplot(aes(MIR, color=VBD_AS_Full, VectorGroup)) +
+  geom_boxplot()+
+  facet_grid(cols=vars(VBD_AS_Full), scales = "free")+
+  theme(legend.position="none")+
+  labs(y = "Disease", x= "MIR %o")
+
+
+```
+
+## Boxplot of MIR - Disease/Species
 ```{r}
 c %>% 
   filter(VBD_Agent_subtype %in% di) %>%
