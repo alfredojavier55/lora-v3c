@@ -1,0 +1,405 @@
+---
+title: "LiRA - WG1 Vector non EU from EFSA Systematic literature review"
+author: "Alfredo Acosta SVA"
+date: "`r Sys.Date()`"
+output:
+  html_document: 
+    toc: yes
+    toc_float: true
+    theme: cosmo
+    fig_caption: yes
+    number_sections: yes
+    code_folding: show
+  word_document: default
+  html_notebook: 
+    toc: yes
+---
+# Analisis of efsa publication on vectors
+- Systematic literature review on the vector status of potential 
+vector species of 36 vector-borne pathogens
+- Information needed for the integration of WG1-WG2
+
+```{r }
+# Library ----
+library(readxl)
+library(dplyr)
+library(lubridate)
+library(leaflet)
+library(sf)
+library(DT)
+library(ggplot2)
+```
+
+```{r}
+setwd("C:/Users/alfredo.acosta/OneDrive - SVA/LORA/Working example/vectors/")
+```
+
+# DB EfSA
+## Reading data
+```{r warning=FALSE}
+w <- read_xlsx("DL3.1.2.SLR_VectorStatus_Database_comp.xlsx", sheet = 1)
+```
+# Contents of the DB
+```{r}
+colnames(w)
+table(w$year)
+table(w$Continent)
+table(w$Host)
+table(w$VBD_AS_Full)
+table(w$VBD_Agent_subtype)
+table(w$VBD_Agent_subtype)
+table(w$VectorGroup)
+table(w$VectorSpecies)
+length(unique(w$VectorSpecies))
+head(w)
+```
+
+# Species specified on the Vector net output
+```{r}
+species <- c("Aedes albopictus",
+             "Aedes vexans vexans",
+             "Aedes aegypti",
+             "Aedes japonicus",
+             "Culex pipiens",
+             "Culex modestus", #MC: 28.11.2023 added
+             "Culex tarsalis", ## not in the dataset
+             "Culex quinquefasciatus") ## not in the dataset
+
+table(w$VectorSpecies %in% species)
+
+```
+# Number of reports for every country
+```{r}
+reports <- w %>% 
+  group_by(Country, Country_ISO) %>% 
+  summarise(n(), diseases=length(unique(VBD_AS_Full)), vectorSP=length(unique(VectorSpecies)))
+
+```
+## Reading the World map
+```{r}
+wm <- st_read("TM_WORLD_BORDERS_SIMPL-0.3.shp")
+
+```
+
+## Number of reports on vectors (pop-up showing the number of on the map
+```{r}
+  # WORLD MAP ----
+  # Update the number of outbreaks on the map
+  wm$reports <- reports$`n()`[match(wm$ISO2, reports$Country_ISO)]
+  wm$diseases <- reports$diseases[match(wm$ISO2, reports$Country_ISO)]
+  wm$vectors <- reports$vectorSP[match(wm$ISO2, reports$Country_ISO)]
+
+  str(wm$reports)
+
+# Maps of outbreaks
+  pal <- colorNumeric(
+    palette = "Spectral",
+    domain = wm$reports, 
+    na.color = "white"
+  )
+
+
+# Maps of cases ----
+pal <- colorNumeric(
+  palette = "Spectral",
+   reverse = TRUE,
+  domain = wm$reports, 
+  na.color = "white")
+
+map <- leaflet(wm) %>%
+  addProviderTiles(providers$CartoDB.Positron)
+
+mc <- map %>%
+  setView(lng = 25, lat = 10, zoom = 2) %>%
+  addPolygons(weight = 0.5, 
+              color = ~pal(reports),
+              popup = ~paste("Diseases:", diseases, "<br>", "Vectors", vectors)) %>% 
+  addLegend("bottomright", pal = pal, values = ~reports,
+            # title = paste("Cases",
+            #               "<br>",
+            #               date_to_analyse, 
+            #               "<br>", 
+            #               disease_to_analyse),
+            opacity = 1)
+
+mc
+
+```
+
+# African Swine fever
+```{r}
+reports <- w %>% 
+  filter(VBD_Agent_subtype == "ASFV") %>% 
+  group_by(Country, Country_ISO) %>% 
+  summarise(n(), vector=length(unique(VectorSpecies)), vectorSP=paste(unique(VectorSpecies), collapse = ", "))
+reports
+```
+
+## Map Number of reports on vectors (pop-up showing the name of on the map)
+```{r}
+  # WORLD MAP ----
+  # Update the number of outbreaks on the map
+  wm$reports <- reports$`n()`[match(wm$ISO2, reports$Country_ISO)]
+  wm$vector <- reports$vector[match(wm$ISO2, reports$Country_ISO)]
+  wm$vectorSP <- reports$vectorSP[match(wm$ISO2, reports$Country_ISO)]
+
+  str(wm$reports)
+
+# Maps of outbreaks
+  pal <- colorNumeric(
+    palette = "Spectral",
+    domain = wm$reports, 
+    na.color = "white"
+  )
+
+
+# Maps of cases ----
+pal <- colorNumeric(
+  palette = "Spectral",
+   reverse = TRUE,
+  domain = wm$reports, 
+  na.color = "white")
+
+map <- leaflet(wm) %>%
+  addProviderTiles(providers$CartoDB.Positron)
+
+mc <- map %>%
+  setView(lng = 25, lat = 10, zoom = 2) %>%
+  addPolygons(weight = 0.5, 
+              color = ~pal(reports),
+              popup = ~paste("N vectors:", vector, "<br>", "Names", vectorSP)) %>% 
+  addLegend("bottomright", pal = pal, values = ~reports,
+            # title = paste("Cases",
+            #               "<br>",
+            #               date_to_analyse, 
+            #               "<br>", 
+            #               disease_to_analyse),
+            opacity = 1)
+
+mc
+
+```
+
+
+# West nile virus
+```{r}
+reports <- w %>% 
+  filter(VBD_Agent_subtype == "WNV") %>% 
+  group_by(Country, Country_ISO) %>% 
+  summarise(n(), vector=length(unique(VectorSpecies)), vectorSP=paste(unique(VectorSpecies), collapse = ", "))
+reports
+```
+
+## Map Number of reports on vectors (pop-up showing the name of on the map)
+```{r}
+  # WORLD MAP ----
+  # Update the number of outbreaks on the map
+  wm$reports <- reports$`n()`[match(wm$ISO2, reports$Country_ISO)]
+  wm$vector <- reports$vector[match(wm$ISO2, reports$Country_ISO)]
+  wm$vectorSP <- reports$vectorSP[match(wm$ISO2, reports$Country_ISO)]
+
+  str(wm$reports)
+
+# Maps of outbreaks
+  pal <- colorNumeric(
+    palette = "Spectral",
+    domain = wm$reports, 
+    na.color = "white"
+  )
+
+
+# Maps of cases ----
+pal <- colorNumeric(
+  palette = "Spectral",
+   reverse = TRUE,
+  domain = wm$reports, 
+  na.color = "white")
+
+map <- leaflet(wm) %>%
+  addProviderTiles(providers$CartoDB.Positron)
+
+mc <- map %>%
+  setView(lng = 25, lat = 10, zoom = 2) %>%
+  addPolygons(weight = 0.5, 
+              color = ~pal(reports),
+              popup = ~paste("N vectors:", vector, "<br>", "Names", vectorSP)) %>% 
+  addLegend("bottomright", pal = pal, values = ~reports,
+            # title = paste("Cases",
+            #               "<br>",
+            #               date_to_analyse, 
+            #               "<br>", 
+            #               disease_to_analyse),
+            opacity = 1)
+
+mc
+
+```
+
+# BTV
+```{r}
+reports <- w %>% 
+  filter(VBD_Agent_subtype == "BTV") %>% 
+  group_by(Country, Country_ISO) %>% 
+  summarise(n(), vector=length(unique(VectorSpecies)), vectorSP=paste(unique(VectorSpecies), collapse = ", "))
+reports
+```
+
+## Map Number of reports on vectors (pop-up showing the name of on the map)
+```{r}
+  # WORLD MAP ----
+  # Update the number of outbreaks on the map
+  wm$reports <- reports$`n()`[match(wm$ISO2, reports$Country_ISO)]
+  wm$vector <- reports$vector[match(wm$ISO2, reports$Country_ISO)]
+  wm$vectorSP <- reports$vectorSP[match(wm$ISO2, reports$Country_ISO)]
+
+  str(wm$reports)
+
+# Maps of outbreaks
+  pal <- colorNumeric(
+    palette = "Spectral",
+    domain = wm$reports, 
+    na.color = "white"
+  )
+
+
+# Maps of cases ----
+pal <- colorNumeric(
+  palette = "Spectral",
+   reverse = TRUE,
+  domain = wm$reports, 
+  na.color = "white")
+
+map <- leaflet(wm) %>%
+  addProviderTiles(providers$CartoDB.Positron)
+
+mc <- map %>%
+  setView(lng = 25, lat = 10, zoom = 2) %>%
+  addPolygons(weight = 0.5, 
+              color = ~pal(reports),
+              popup = ~paste("N vectors:", vector, "<br>", "Names", vectorSP)) %>% 
+  addLegend("bottomright", pal = pal, values = ~reports,
+            # title = paste("Cases",
+            #               "<br>",
+            #               date_to_analyse, 
+            #               "<br>", 
+            #               disease_to_analyse),
+            opacity = 1)
+
+mc
+
+```
+
+# MIR Mininum infection rates 
+## Selection of pririotized diseases
+```{r}
+# ASF	African Swine Fever
+# CCHF	Crimean-Congo Haemorrhagic fever
+# EHD	Epizootic Haemorrhagic Disease
+# EE	Equine Encephalosis
+# *** HPAI	Highly Pathogenic Avian Influenza
+# JE	Japanese Encephalitis 
+# *** LSD	Lumpy Skin Disease
+# *** Rab	Rabies
+# RVF	Rift Valley Fever
+# WNF	West Nile Fever
+# 
+head(w)
+
+# Which abreviattion correspond to the disease
+w %>% 
+group_by(w$VBD_Agent_subtype, w$VBD_AS_Full) %>% 
+  summarise(n())
+
+di <- c("ASFV","BTV","CCHFV", "EHDV", "EEV", "JEV", "RVFV", "WNV")
+
+```
+
+## Options to filter
+```{r}
+table(w$fedStatus)
+table(w$LifeStage)
+```
+## Filtering criteria for Mosquitoes, Bitting midges and Sand flies (127)
+```{r}
+a <- w %>% 
+  filter(MIR > 0) %>% 
+  # filter(VBD_Agent_subtype %in% di) %>%
+  filter(fedStatus == "Unfed" | fedStatus == "Gravid") %>% 
+  filter(VectorGroup == "Mosquitoes" | VectorGroup == "Biting midges" | VectorGroup == "Sand flies") %>%
+  filter(LifeStage == "Female")
+datatable(a)
+```
+
+## Filter criteria for Ticks (27)
+```{r}
+b <-  w %>% 
+    filter(MIR > 0) %>% 
+    filter(fedStatus == "Unfed" | fedStatus == "Gravid") %>% 
+    filter(VectorGroup == "Ticks")
+
+  datatable(b)
+```
+## Number of MIR values (Checking filter)
+```{r}
+# Minimum infection rates
+# After applying the filtering criteria on the feeding status and life stage, 42 MIR values were
+# found or calculated for mosquitoes, 67 for sand flies, 27 for ticks, and 18 for biting midges.
+# Records including MIR values are visualized in a boxplot grouped by vector group (Figure 4).
+# Details per arthropod species are provided in Appendix F.
+
+c <- rbind(a,b)
+c %>% group_by(VectorGroup) %>% 
+  summarise(n())
+
+```
+
+# MIR Table
+```{r}
+c <- rbind(a,b)
+
+datatable(c %>% 
+  filter(VBD_Agent_subtype %in% di) %>%
+  group_by(VBD_AS_Full, VectorGroup) %>% 
+  summarise(obs = n(),Min=round(min(MIR)), Median=round(median(MIR),2), Max=round(max(MIR),2)))
+
+```
+
+
+## MIR considerig disease, vector group and species
+```{r}
+datatable(c %>% 
+  filter(VBD_Agent_subtype %in% di) %>%
+  group_by(VBD_AS_Full, VectorGroup, VectorSpecies) %>% 
+  summarise(obs = n(),Min=round(min(MIR)), Median=round(median(MIR),2), Max=round(max(MIR),2)))
+
+
+```
+
+## Boxplot of MIR - Disease
+```{r}
+c %>% 
+  filter(VBD_Agent_subtype %in% di) %>%
+  group_by(VBD_AS_Full, VectorGroup) %>% 
+  ggplot(aes(MIR, VBD_AS_Full)) +
+  geom_boxplot()+
+  labs(y = "Disease", x= "MIR %o")
+```
+
+## Boxplot of MIR - Species
+```{r}
+c %>% 
+  filter(VBD_Agent_subtype %in% di) %>%
+  group_by(VBD_AS_Full, VectorGroup, VectorSpecies) %>% 
+  ggplot(aes(MIR, color=VBD_AS_Full, VectorSpecies)) +
+  geom_boxplot()+
+  facet_grid(cols=vars(VBD_AS_Full), scales = "free")+
+  theme(legend.position="none")+
+  labs(y = "Disease", x= "MIR %o")
+
+
+```
+
+# Credits 
+Acosta, Alfredo PhD<sup>1</sup>. 
+
+**Swedish Veterinary Agency SVA<sup>1</sup>**: SVA <http://www.sva.se/>. 
