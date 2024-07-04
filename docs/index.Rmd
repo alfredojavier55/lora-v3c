@@ -357,7 +357,7 @@ c <- rbind(a,b)
 datatable(c %>% 
   filter(VBD_Agent_subtype %in% di) %>%
   group_by(VBD_AS_Full, VectorGroup) %>% 
-  summarise(obs = n(),Min=round(min(MIR)), Median=round(median(MIR),2), Max=round(max(MIR),2)))
+  summarise(obs = n(),Min=round(min(MIR),2), Median=round(median(MIR),2), Max=round(max(MIR),2)))
 
 ```
 
@@ -367,7 +367,7 @@ datatable(c %>%
 datatable(c %>% 
   filter(VBD_Agent_subtype %in% di) %>%
   group_by(VBD_AS_Full, VectorGroup, VectorSpecies) %>% 
-  summarise(obs = n(),Min=round(min(MIR)), Median=round(median(MIR),2), Max=round(max(MIR),2)))
+  summarise(obs = n(),Min=round(min(MIR),2), Median=round(median(MIR),2), Max=round(max(MIR),2)))
 
 
 ```
